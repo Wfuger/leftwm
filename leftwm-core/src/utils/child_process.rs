@@ -165,6 +165,7 @@ struct DesktopEntry {
     only_show_in: Option<HashSet<String>>,
     not_show_in: Option<HashSet<String>>,
     hidden: bool,
+    wmclass: Option<String>,
 }
 
 impl DesktopEntry {
@@ -201,6 +202,10 @@ impl DesktopEntry {
                     "OnlyShowIn" => entry.only_show_in = Some(Self::split_to_set(value)),
                     "NotShowIn" => entry.not_show_in = Some(Self::split_to_set(value)),
                     "Hidden" => entry.hidden = Self::str_bool(value).unwrap_or_default(),
+                    "StartupWMClass" => entry.wmclass = Some(value.to_string()),
+                    "Application" if entry.wmclass.is_none() => {
+                        entry.wmclass = Some(value.to_string())
+                    }
                     _ => {}
                 }
             }

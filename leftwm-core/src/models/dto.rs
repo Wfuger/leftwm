@@ -1,3 +1,5 @@
+use std::{collections::HashMap, hash::Hash};
+
 use crate::layouts::Layout;
 use crate::state::State;
 use serde::{Deserialize, Serialize};
@@ -19,6 +21,7 @@ pub struct ManagerState {
     pub viewports: Vec<Viewport>,
     pub active_desktop: Vec<String>,
     pub working_tags: Vec<String>,
+    pub ws_wm_class: HashMap<String, Vec<(String, u32)>>,
 }
 
 #[allow(clippy::struct_excessive_bools)]
@@ -45,6 +48,7 @@ pub struct DisplayWorkspace {
 pub struct DisplayState {
     pub window_title: String,
     pub workspaces: Vec<DisplayWorkspace>,
+    pub ws_wm_class: HashMap<String, Vec<(String, u32)>>,
 }
 
 impl From<ManagerState> for DisplayState {
@@ -68,6 +72,7 @@ impl From<ManagerState> for DisplayState {
         Self {
             workspaces,
             window_title: m.window_title.unwrap_or_default(),
+            ws_wm_class: m.ws_wm_class
         }
     }
 }
@@ -131,6 +136,15 @@ impl From<&State> for ManagerState {
                 layout: ws.layout,
             });
         }
+        // wm class and pid list
+        let mut ws_wm_class: HashMap<String, Vec<(String, u32)>> = HashMap::new();
+        for win in &state.windows {
+            if let Some(wm_class) = &win.res_class {
+                let class_list = ws_wm_class.entry(wm_class.clone()).or_insert(vec![]);
+                let win_name = win.name.as_ref().unwrap_or(&"".to_string()).clone();
+                class_list.push((win_name, win.pid.unwrap_or(0)));
+            }
+        }
         let active_desktop = match state.focus_manager.workspace(&state.workspaces) {
             Some(ws) => ws
                 .tags
@@ -143,6 +157,7 @@ impl From<&State> for ManagerState {
             Some(win) => win.name.clone(),
             None => None,
         };
+
         Self {
             window_title,
             desktop_names: state
@@ -154,6 +169,7 @@ impl From<&State> for ManagerState {
             viewports,
             active_desktop,
             working_tags,
+            ws_wm_class,
         }
     }
 }

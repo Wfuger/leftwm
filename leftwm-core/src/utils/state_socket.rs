@@ -135,6 +135,13 @@ mod test {
                 .unwrap()
         );
 
+        println!("{:?}", serde_json::to_string(&Into::<ManagerState>::into(state)).unwrap());
+        println!("{:?}", BufReader::new(UnixStream::connect(socket_file.clone()).await.unwrap())
+            .lines()
+            .next_line()
+            .await
+            .expect("Read next line")
+            .unwrap());
         assert_eq!(
             serde_json::to_string(&Into::<ManagerState>::into(state)).unwrap(),
             BufReader::new(UnixStream::connect(socket_file.clone()).await.unwrap())
